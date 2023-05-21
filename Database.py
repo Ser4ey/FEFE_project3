@@ -31,16 +31,20 @@ class DataBaseConnection:
         return data
 
 
-class Users:
+class UsersDB:
     def __init__(self, connection: DataBaseConnection):
         self.login = connection.login
         self.password = connection.password
-        # if not self.try_log_in(self.login, self.password):
-        #     raise Exception('Пользователя с такими данными не существует! Неверен логин/пароль!')
         self.connection = connection
-        self.create_table_of_users()
+        self.create_desk()
+        if not self.try_log_in(connection, self.login, self.password):
+            print('Пользователя с такими данными не существует! Неверный логин или пароль!')
+            return None
+            # raise Exception('Пользователя с такими данными не существует! Неверный логин или пароль!')
 
-    def create_table_of_users(self):
+
+
+    def create_desk(self):
         sql = '''
         create table IF NOT EXISTS `users` (
           `user_id` INTEGER PRIMARY KEY AUTOINCREMENT not null,
@@ -48,13 +52,14 @@ class Users:
           `password` varchar(255) not null
         )'''
         self.connection.execute(sql, commit=True)
+        return True
 
 
-    # @staticmethod
-    def is_login_exist(self, login):
+    @staticmethod
+    def is_login_exist(connection, login):
         # проверяет существует ли пользователь с указанным логином
         sql = "SELECT * FROM users WHERE login=?"
-        result = self.connection.execute(sql, (login,), fetchone=True)
+        result = connection.execute(sql, (login,), fetchone=True)
 
         if result is not None:
             # print("Пользователь с таким логином существует")
@@ -63,55 +68,56 @@ class Users:
             # print("Пользователя с таким логином не существует")
             return False  # не существует
 
-    # @staticmethod
-    def try_log_in(self, login, password):
+
+    @staticmethod
+    def try_log_in(connection, login, password):
         # проверяет cуществует ли пользователь с логин/пароль
         sql = "SELECT * FROM users WHERE login=? AND password=?"
-        result = self.connection.execute(sql, (login, password), fetchone=True)
+        result = connection.execute(sql, (login, password), fetchone=True)
 
         if result is not None:
-            print("Пользователь с таким логином и паролем существует")
+            # print("Пользователь с таким логином и паролем существует")
             return True  # существует
         else:
-            print("Пользователя с таким логином и паролем не существует")
+            # print("Пользователя с таким логином и паролем не существует")
             return False  # не существует (Неверен логин/пароль)
 
 
-    # @staticmethod
-    def add_new_user(self, login, password):
-        if self.is_login_exist(login):
+    @staticmethod
+    def add_new_user(connection, login, password):
+        if UsersDB.is_login_exist(connection, login):
             print('Пользователя с таким логином уже существует!')
             return False
         # добавляем в бд нового пользователя
         sql_insert = "INSERT INTO users (login, password) VALUES (?, ?)"
-        self.connection.execute(sql_insert, (login, password), commit=True)
+        connection.execute(sql_insert, (login, password), commit=True)
         print("Пользователь успешно добавлен")
         return True
 
 
-    # @staticmethod
-    def get_user_login_by_id(self, id):
+    @staticmethod
+    def get_user_login_by_id(connection, id):
         # возвращает логин пользователя по id
         sql = "SELECT login FROM users WHERE user_id =?"
-        result = self.connection.execute(sql, (id,), fetchone=True)
+        result = connection.execute(sql, (id,), fetchone=True)
         login = result[0]
         if result is not None:
             # print("Логин пользователя по его id: ")
             return login
 
 
-    # @staticmethod
-    def get_user_id_by_login(self, login):
+    @staticmethod
+    def get_user_id_by_login(connection, login):
         # возвращает id пользователя по логину (логин уникален для каждого пользователя)
         sql = "SELECT user_id FROM users WHERE login=?"
-        result = self.connection.execute(sql, (login,), fetchone=True)
+        result = connection.execute(sql, (login,), fetchone=True)
         id = result[0]
         if result is not None:
             # print("id пользователя по его логину")
             return id
 
 
-class Desks:
+class DesksDB:
     def __init__(self, connection: DataBaseConnection):
         self.login = connection.login
         self.password = connection.password
@@ -137,49 +143,82 @@ class Desks:
         sql_insert = "INSERT INTO desks (desk_name, public, owner_login) VALUES (?, ?, ?)"
         self.connection.execute(sql_insert, (desk_name, desk_type, self.login), commit=True)
         print("Доска успешно создана!")
+        return True
+
+    def create_columns_table(self):
+        sql = '''
+        CREATE TABLE IF NOT EXISTS `columns` (
+            `column_id` INTEGER PRIMARY KEY AUTOINCREMENT not null,
+            `source_id` INTEGER REFERENCES desks(desk_id),
+            `column_name` varchar(255) not null
+        )'''
+        self.connection.execute(sql, commit=True)
+        # print("Таблица колонок успешно создана!")
 
     def get_owned_desks(self):
+        sql = "SELECT desk_id, desk_name, public, owner_login FROM desks WHERE owner_login=?"
+        result = self.connection.execute(sql, (self.login,), fetchall=True)
+        return result
         # список досок которыми владает пользователь (self.login) в формате (desk_id, desk_name, public, owner_login)
 
-        return [(0, 'Доска 1', 0, 'Myself'), (1, 'Доска для 2112', 1, 'Myself')]
 
-    # def get_public_desks(self):
-    #     # список публичных досок досок в формате (desk_id, desk_name, public)
-    #
-    #     return [(33, 'Доска 333', 1, 'Sera'), (222, 'Доска 77', 1, 'Bob')]
-    #
-    # def can_edit_desk(self, desk_id):
-    #     # можем ли мы редактировать доску
-    #     # доску может редактировать владелец или пользователь из таблицы "права на редактирования"
-    #
-    #     return True
-    #
-    # @staticmethod
-    # def get_desk_name_by_desk_id(desk_id):
-    #     # desk_name - не уникален
-    #
-    #     return 'desk_name'
-    #
-    # @staticmethod
-    # def get_column_name_by_column_id(column_id):
-    #     # column_name - не уникален
-    #
-    #     return 'column_name'
-    #
-    # def change_desk_name(self, desk_id, new_desk_name):
-    #     # изменяем имя доски в бд
-    #     # True - успешно
-    #     # False - доска с таким именем уже существует
-    #
-    #     return True
+    def get_public_desks(self):
+        sql = "SELECT desk_id, desk_name, public, owner_login FROM desks WHERE public=1"
+        result = self.connection.execute(sql, fetchall=True)
+        return result
+        # список публичных досок досок в формате (desk_id, desk_name, public, owner_login)
 
-if __name__ == '__main__':
-    conn1 = DataBaseConnection("Roma", "Slepchenko")
-    user1 = Users(conn1)
-    # user1.add_new_user("Sergey", "Pristup")
-    # user1.add_new_user("Misha", "Elkin")
-    # user1.add_new_user("Stepan", "Kotelnikov")
 
-    desk1 = Desks(conn1)
-    desk1.create_desk("first desk", 1)
-    # desk1.create_desk_table("second_desk", 0)
+    def can_edit_desk(self, desk_id):
+        # можем ли мы редактировать доску
+        # доску может редактировать владелец или пользователь из таблицы "права на редактирования"
+        sql = "SELECT owner_login FROM desks WHERE desk_id=?"
+        result = self.connection.execute(sql, (desk_id,), fetchone=True)
+        # TODO: Доделать проверку на наличие прав редактирования из таблицы "права на редактирования"
+        if result is not None and result[0] == self.login:
+            return True
+        else:
+            return False
+
+
+    @staticmethod
+    def get_desk_name_by_desk_id(connection, desk_id):
+        # desk_name - не уникален
+        sql = "SELECT desk_name FROM desks WHERE desk_id=?"
+        result = connection.execute(sql, (desk_id,), fetchone=True)
+        return result[0]
+
+
+    @staticmethod
+     # TODO: Дописать функцию, она свзяана с функцией add_column_to_desk из твоей части
+    def get_column_name_by_column_id(column_id):
+
+        # column_name - не уникален
+        return 'column_name'
+
+
+    def change_desk_name(self, desk_id, new_desk_name):
+        # изменяем имя доски в бд
+        # True - успешно
+        # False - доска с таким именем уже существует
+        sql = "UPDATE desks SET desk_name = ? WHERE desk_id = ?"
+        self.connection.execute(sql, (new_desk_name, desk_id), commit=True)
+        print(f"Имя доски изменено на {new_desk_name}!")
+        return True
+
+# if __name__ == '__main__':
+#     conn1 = DataBaseConnection("Roma", "Slepchenko")
+#     user1 = UsersDB(conn1)
+#
+#     user1.add_new_user(conn1, "Roma", "Slepchenko")
+#     user1.add_new_user(conn1, "Sergey", "Pristup")
+#     user1.add_new_user(conn1, "Misha", "Elkin")
+#     user1.add_new_user(conn1, "Stepan", "Kotelnikov")
+#     UsersDB.add_new_user(conn1, "Gleb", "Kim")
+#
+#     desk1 = DesksDB(conn1)
+#     desk1.create_desk("first desk", 1)
+#     desk1.create_desk("second_desk", 0)
+#     desk1.create_desk("third_desk", 1)
+#     desk1.create_columns_table()
+#     desk1.change_desk_name(1, "new_name")

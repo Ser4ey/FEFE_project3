@@ -1,161 +1,119 @@
 # сюда нужно импортировать классы бд
-import sqlite3
-import data.config
+from loader import connect, db_of_users, db_of_desks
 
 
 class UserInterface:
-    def __init__(self, login, password, path_to_db = data.config.path_to_database):
-        # if not self.try_log_in(login, password):
-        #     raise Exception('Пользователя с такими данными не существует! Неверен логин/пароль!')
-        self.path_to_db = path_to_db
+    def __init__(self, login, password):
+        if not self.try_log_in(login, password):
+            raise Exception('Пользователя с такими данными не существует! Неверен логин/пароль!')
         self.login = login
         self.password = password
-        self.create_table_of_users()
-
-
-    def create_table_of_users(self):
-        sql = '''
-        create table IF NOT EXISTS `users` (
-          `user_id` INTEGER PRIMARY KEY AUTOINCREMENT not null,
-          `login` varchar(255) not null,
-          `password` varchar(255) not null
-        )'''
-        self.execute(sql, commit=True)
-
-
-    def create_table_of_desk(self):
-        sql = '''
-        create table IF NOT EXISTS `desk` (
-            `desk_id` INTEGER PRIMARY KEY AUTOINCREMENT not null,
-            
-        )'''
-    @property
-    def connection(self):
-        return sqlite3.connect(self.path_to_db)
-
-    def execute(self, sql: str, parameters: tuple = None, fetchone=False, fetchall=False, commit=False):
-        if not parameters:
-            parameters = tuple()
-
-        connection = self.connection
-        # connection.set_trace_callback(logger)
-        cursor = connection.cursor()
-        cursor.execute(sql, parameters)
-        data = None
-
-        if commit:
-            connection.commit()
-        if fetchone:
-            data = cursor.fetchone()
-        if fetchall:
-            data = cursor.fetchall()
-        connection.close()
-        return data
-
 
     @staticmethod
-    def is_login_exist(self, login):
+    def is_login_exist(login):
+        connection_users = connect
+        users = db_of_users.is_login_exist(connection_users, login)
+        if users:
+            return True
+        else:
+            return False
         # проверяет существует ли пользователь с указанным логином
-        sql = "SELECT * FROM users WHERE login=?"
-        result = self.execute(sql, (login,), fetchone=True)
-
-        if result is not None:
-            print("Пользовательн с таким логином существует")
-            return True  # существует
-        else:
-            print("Пользователья с таким логином не существует")
-            return False  # не существует
+        # True - существует
+        # False - нет существует
 
 
     @staticmethod
-    def try_log_in(self, login, password):
+    def try_log_in(login, password):
+        connection_users = connect
+        users = db_of_users.try_log_in(connection_users, login, password)
+        if users:
+            return True
+        else:
+            return False
         # проверяет cуществует ли пользователь с логин/пароль
-        sql = "SELECT * FROM users WHERE login=? AND password=?"
-        result = self.execute(sql, (login, password), fetchone=True)
+        # True - существует
+        # False - нет существует (Неверен логин/пароль)
+        # return True
 
-        if result is not None:
-            print("Пользователь с таким логином и паролем существует")
-            return True  # существует
+    @staticmethod
+    def add_new_user(login, password):
+        connection_users = connect
+        users = db_of_users.add_new_user(connection_users, login, password)
+        if users:
+            return True
         else:
-            print("Пользователья с таким логином и паролем существует")
-            return False  # не существует (Неверен логин/пароль)
-
-
-    @staticmethod
-    def add_new_user(self, login, password):
-        if UserInterface.is_login_exist(login):
-            raise Exception('Пользователя с таким логином уже существует!')
+            return False
         # добавляем в бд нового пользователя
-        sql_insert = "INSERT INTO users (login, password) VALUES (?, ?)"
-        self.execute(sql_insert, (login, password), commit=True)
-        print("Пользователь успешно добавлен")
-        return True
-
+        # return True
 
     @staticmethod
-    def get_user_login_by_id(self, id):
+    def get_user_login_by_id(id):
         # возвращает логин пользователя по id
-        sql = "SELECT login FROM users WHERE user_id =?"
-        result = self.execute(sql, (id,), fetchone=True)
-        login = result[0]
-        if result is not None:
-            print("Логин пользователя по его id")
-            return login
-
+        connection_users = connect
+        users = db_of_users.get_user_login_by_id(connection_users, id)
+        return users
+        # return 'login'
 
     @staticmethod
-    def get_user_id_by_login(self, login):
+    def get_user_id_by_login(login):
+        connection_users = connect
+        users = db_of_users.get_user_id_by_login(connection_users, login)
+        return users
         # возвращает id пользователя по логину (логин уникален для каждого пользователя)
-        sql = "SELECT id FROM users WHERE login=?"
-        result = self.execute(sql, (login,), fetchone=True)
-        id = result[0]
-        if result is not None:
-            print("id пользователя по его логину")
-            return id
+        # return 1
 
     def create_desk(self, desk_name, desk_type):
+        users = db_of_desks.create_desk(desk_name, desk_type)
         # создаём доску в бд
         # владелец доски self.login
         # True - доска успешно создана
-        # False - доска с таким именем уже существует
+        print(f'Создана доска: {desk_name}:{desk_type}')
         return True
 
     def get_owned_desks(self):
-        # список досок которыми владеет пользователь (self.login) в формате (desk_id, desk_name, public, owner_login)
-
-        return [(0, 'Доска 1', 0, 'Myself'), (1, 'Доска для 2112', 1, 'Myself')]
+        # список досок которыми владает пользователь (self.login) в формате (desk_id, desk_name, public, owner_login)
+        print(f'Получаем список досок для {self.login}')
+        users = db_of_desks.get_owned_desks()
+        print(f'Доски для {self.login}: {users}')
+        return users
+        # return [(0, 'Доска 1', 0, 'Myself'), (1, 'Доска для 2112', 1, 'Myself')]
 
     def get_public_desks(self):
-        # список публичных досок в формате (desk_id, desk_name, public)
-
-        return [(33, 'Доска 333', 1, 'Sera'), (222, 'Доска 77', 1, 'Bob')]
+        # список публичных досок досок в формате (desk_id, desk_name, public, owner)
+        users = db_of_desks.get_public_desks()
+        return users
+        # return [(33, 'Доска 333', 1, 'Sera'), (222, 'Доска 77', 1, 'Bob')]
 
     def can_edit_desk(self, desk_id):
         # можем ли мы редактировать доску
         # доску может редактировать владелец или пользователь из таблицы "права на редактирования"
-
-        return True
+        users = db_of_desks.can_edit_desk(desk_id)
+        if users:
+            return True
+        else:
+            return False
 
     @staticmethod
     def get_desk_name_by_desk_id(desk_id):
         # desk_name - не уникален
-
-        return 'desk_name'
+        connection_users = connect
+        users = db_of_desks.get_desk_name_by_desk_id(connection_users, desk_id)
+        return users
+        # return 'desk_name'
 
     @staticmethod
+    # TODO: дописать функцию
     def get_column_name_by_column_id(column_id):
         # column_name - не уникален
-
         return 'column_name'
 
     def change_desk_name(self, desk_id, new_desk_name):
         # изменяем имя доски в бд
         # True - успешно
         # False - доска с таким именем уже существует
-
+        users = db_of_desks.change_desk_name(desk_id, new_desk_name)
         return True
 
-    # TODO: LAST
     def change_column_name(self, column_id, new_column_name):
         # изменяем имя column в бд
         # True - успешно
@@ -236,6 +194,8 @@ class UserInterface:
 
     def get_all_user(self):
         # список всех пользователе (user_id, login)
+        # users = db_of_users.get_all_users()
+        # return users
         return [(1, 'Bob'), (3, 'Sera')]
 
     def get_all_user_with_edit_rights(self, desk_id):
@@ -246,5 +206,8 @@ class UserInterface:
 
 
 if __name__ == '__main__':
-    user1 = UserInterface("zxc", "123")
-    user1.add_new_user("zxc", "123")
+    UserInterface.add_new_user('rere', '113')
+    r = UserInterface.try_log_in('rere', 113)
+
+    print(r)
+

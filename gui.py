@@ -32,6 +32,9 @@ def Login(window):
     def try_to_login(login,password):
         if UserInterface.try_log_in(login.get(), password.get()):
             user_interface = UserInterface(login.get(), password.get())
+        print(f'Вход: {login}:{password}')
+        if UserInterface.try_log_in(login, password): # Error login = '' password = ''
+            user_interface = UserInterface(login, password)
             Menu(window, user_interface)
         else:
             messagebox.showerror('Ошибка', 'Неверный логин или пароль')
@@ -82,14 +85,15 @@ def SignUp(window):
     password2 = StringVar()
 
     def try_to_signup(login, password, password2):
-        if not (UserInterface.is_login_exist(login)) and (password.get() == password2.get()):
+        # print(f'Регистрация: {login.get()}:{password.get()}:{password2.get()}')
+        if not (UserInterface.is_login_exist(login.get())) and (password.get() == password2.get()):
             UserInterface.add_new_user(login.get(), password.get())
             user_interface = UserInterface(login.get(), password.get())
             Menu(window, user_interface)
         elif password.get() != password2.get():
             messagebox.showerror('Ошибка', 'Пароли не совпадают')
             SignUp(window)
-        elif UserInterface.is_login_exist(login):
+        elif UserInterface.is_login_exist(login.get()):
             messagebox.showerror('Ошибка', 'Пользователь с таким логином уже существует')
             SignUp(window)
 
@@ -168,6 +172,7 @@ def DesksList(window, user_interface, desks):
     # создаем стиль для кнопок
     button_style = {"bg": "#6DB0E3", "fg": "#043C66", "font": ("Arial Black", 12), "bd": 0, "activebackground": "#304D63"}
 
+    desks = [(0, 'Доска 1', 0, 'Myself'), (1, 'Доска для 2112', 1, 'хйу') , (2, 'Нееееет', 1, 'bob') , (3, 'ДОСКА', 0, 'хйу') , (4, 'Доска для 2112', 0, 'Adasd')]
     if len(desks) > 0:
         # создаем кнопки
         button_back = Button(window, text="Назад", command=lambda: Menu(window, user_interface), **button_style)
@@ -583,6 +588,142 @@ def EditRights(window, user_interface, desk):
     scrollbar.place(relx=0.8, rely=0.5, relheight=0.8, anchor='center', relwidth=0.05)
 
 def Card(window, user_interface, card, desk):
+
+    # удаляем элементы окна
+    for widget in window.winfo_children():
+        widget.destroy()
+    # назначаем цвет фона
+    if card['card_status'] == 1:
+        background_color='#87e078'
+    elif card['card_status'] == 2:
+        background_color = '#e0da78'
+    elif card['card_status'] == 3:
+        background_color = '#e07878'
+    else:
+        background_color = '#D7E3F5'
+    window.config(bg=background_color)
+
+    # функция смены статуса
+    def change_status(window, user_interface, card):
+        if card['card_status'] < 3:
+            card['card_status'] += 1
+        else:
+            card['card_status'] = 1
+        user_interface.change_card_status(card['card_id'], card['card_status'])
+
+    # функция редактирования названия и текста
+    def card_edit(card_id, card_name, card_text):
+        editwindow = Tk()
+        editwindow.geometry("450x550")
+        editwindow.title("Редактирование карточки")
+        editwindow.config(bg="#D7E3F5")
+        new_title=StringVar()
+        new_text=StringVar()
+
+        # функция подтверждения изменений
+        def confirm_changes(card_id, new_text, new_title):
+            newtext = new_text.get()
+            newtitle = new_title.get()
+            if messagebox.askyesno(title="Подтвержение операции", message="Изменить данные карточки?"):
+                if (user_interface.change_card_title(card_id, newtitle) and user_interface.change_card_text(card_id, newtext)):
+                    messagebox.showinfo('Изменение данных карточки', 'Данные карточки успешно изменены')
+                    editwindow.destroy()
+                else:
+                    messagebox.showerror('Ошибка', 'Во время изменения данных карточки произошла ошибка')
+                    editwindow.destroy()
+
+        # создаем стили
+        label_style = {"bg": "#D7E3F5", "fg": "#043C66", "font": ("Calibri", 14)}
+        entry_style = {"bg": "white", "fg": "#043C66", "font": ("Calibri", 14), "width": 20, "bd": 0}
+        button_style = {"fg": "#043C66", "font": ("Arial Black", 12), "bd": 0,"activebackground": "#304D63"}
+
+        # создаем текстовые поля и кнопки
+        label_title = Label(editwindow, text="Название:", **label_style)
+        label_text = Label(editwindow, text="Текст:", **label_style)
+        entry_title = Entry(editwindow, textvariable=new_title, **entry_style)
+        entry_title.insert(0, card_name)
+
+        text_widget = Text(editwindow, **entry_style)
+        text_widget.place(relx=0.32, rely=0.48, anchor="w", relwidth=0.6, relheight=0.25)
+        scrollbar = Scrollbar(editwindow, command=text_widget.yview)
+        scrollbar.place(relx=0.92, rely=0.48, relheight=0.25, anchor="center")
+        text_widget.config(yscrollcommand=scrollbar.set, padx=5, pady=5)
+        text_widget.insert("1.0", card_text)
+
+        button_confirm = Button(editwindow, text="Подтвердить", command=lambda:(confirm_changes(card_id, new_text, new_title)),bg='#78e082', **button_style)
+        button_cancel = Button(editwindow, text="Отмена", bg='#e07878', command=lambda: editwindow.destroy(), **button_style)
+
+        # задаем размеры кнопок
+        button_confirm.config(width=15, height=1)
+        button_cancel.config(width=10, height=1)
+
+        # располагаем текст, поля для ввода и кнопки
+        label_title.place(relx=0.3, rely=0.3, anchor="e")
+        entry_title.place(relx=0.32, rely=0.3, anchor="w")
+        label_text.place(relx=0.3, rely=0.4, anchor="e")
+        button_confirm.place(relx=0.7, rely=0.7, anchor="center")
+        button_cancel.place(relx=0.3, rely=0.7, anchor="center")
+
+    # создаем стиль для кнопок
+    button_style = {"bg": "#6DB0E3", "fg": "#043C66", "font": ("Arial Black", 12), "bd": 0, "activebackground": "#304D63"}
+    button_style1 = {"bg": background_color, "fg": "#000000", "font": ("Arial Black", 14), "bd": 0, "activebackground": "#304D63"}
+    button_style2 = {"bg": background_color, "fg": "#043C66", "font": ("Arial Regular", 12), "bd": 0, "activebackground": "#304D63"}
+
+    # создаем кнопки и текст
+    button_back = Button(window, text="Назад", command=lambda: (window.config(bg="#D7E3F5"), Desk(window, user_interface, desk)), **button_style)
+    button_cardname = Label(window, text=f"{card['card_title']}", bg=background_color, fg="#043C66", font=("Arial Black", 16))
+    button_edittext = Button(window, text = "Изменить название или текст", command=lambda: card_edit(card['card_id'], card['card_title'], card['card_text']), **button_style2)
+    button_cardstatus = Button(window, text = f"Статус: {card['card_status']}", command=lambda: (change_status(window, user_interface, card), Card(window, user_interface, card, desk)), **button_style1)
+    text = Label(window, text=f"{card['card_text']}", bg=background_color, fg="#000000", font=("Calibri", 14))
+    author = Label(window, text=f"Создал {card['card_author_login']}", bg=background_color, fg="#043C66", font=("Calibri", 12))
+
+    # задаем размеры кнопок
+    button_back.config(width=10, height=1)
+    
+    # создаем стиль для кнопок и текста
+    button_style = {"bg": "#6DB0E3", "fg": "#043C66", "font": ("Arial Black", 12), "bd": 0,"activebackground": "#304D63"}
+    button_style2 = {"fg": "#043C66", "font": ("Arial Black", 12), "bd": 0,"activebackground": "#304D63"}
+    label_style = {"bg": "#D7E3F5", "fg": "#043C66", "font": ("Arial Black", 16)}
+
+    # создаем кнопки и текст
+    button_back = Button(window, text="Назад", command=lambda: Desk(window, user_interface, desk), **button_style)
+    label_deskname = Label(window, text=f"{desk[1]}", **label_style)
+
+    # создаем контейнер для кнопок с возможностью прокрутки
+    canvas = Canvas(window, bg='#D7E3F5')
+    scrollbar = Scrollbar(window, orient=VERTICAL, command=canvas.yview)
+    frame = Frame(canvas)
+    frame.config(bg='#D7E3F5')
+
+    # привязываем фрейм к канвасу и настраиваем прокрутку
+    canvas.create_window((0, 0), window=frame, anchor='nw')
+    canvas.configure(yscrollcommand=scrollbar.set)
+    button_users = []
+
+    for user in users:
+        if user[2] == 1:
+            button = Button(frame, bg='#90cd6b', text=f"{user[1]}", command=lambda user=user: (user_interface.del_edit_rights_on_public_desk(user[1], desk[0]), EditRights(window, user_interface, desk)), **button_style2)
+        else:
+            button = Button(frame, bg='#cd6b6b', text=f"{user[1]}", command=lambda user=user: (user_interface.add_edit_rights_on_public_desk(user[1], desk[0]), EditRights(window, user_interface, desk)), **button_style2)
+
+        button.config(width=15, height=1)
+        button.pack(padx=45, pady=5)
+        button_users.append(button)
+
+        # обновляем геометрию фрейма и канваса
+        frame.update_idletasks()
+        canvas.config(scrollregion=canvas.bbox("all"))
+
+    # задаем размеры кнопок
+    button_back.config(width=10, height=1)
+
+    # располагаем кнопки и текст
+    button_back.place(relx=0.15, rely=0.05, anchor="center")
+    label_deskname.place(relx=0.5, rely=0.05, anchor="center")
+    canvas.place(relx=0.5, rely=0.5, relwidth=0.6, relheight=0.8, anchor='center')
+    scrollbar.place(relx=0.8, rely=0.5, relheight=0.8, anchor='center', relwidth=0.05)
+
+def Card(window, user_interface, card, desk):
     # удаляем элементы окна
     for widget in window.winfo_children():
         widget.destroy()
@@ -686,10 +827,7 @@ def Card(window, user_interface, card, desk):
     text.place(relx=0.5, rely=0.5, anchor="center")
     author.place(relx=0.5, rely=0.95, anchor="center")
 
-login=''
-password=''
 user_interface = UserInterface(login, password)
-desk = (0, 'Доска 1', 0, 'Myself')
 window = Tk()
 window.geometry("450x550")
 window.title("TaskManager")
