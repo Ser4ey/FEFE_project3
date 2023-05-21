@@ -27,12 +27,11 @@ def Start(window):
     button_register.place(relx=0.5, rely=0.7, anchor="center")
 
 def Login(window):
-    login=''
-    password=''
+    login=StringVar()
+    password=StringVar()
     def try_to_login(login,password):
-        print(f'Вход: {login}:{password}')
-        if UserInterface.try_log_in(login, password): # Error login = '' password = ''
-            user_interface = UserInterface(login, password)
+        if UserInterface.try_log_in(login.get(), password.get()):
+            user_interface = UserInterface(login.get(), password.get())
             Menu(window, user_interface)
         else:
             messagebox.showerror('Ошибка', 'Неверный логин или пароль')
@@ -83,15 +82,14 @@ def SignUp(window):
     password2 = StringVar()
 
     def try_to_signup(login, password, password2):
-        # print(f'Регистрация: {login.get()}:{password.get()}:{password2.get()}')
-        if not (UserInterface.is_login_exist(login.get())) and (password.get() == password2.get()):
+        if not (UserInterface.is_login_exist(login)) and (password.get() == password2.get()):
             UserInterface.add_new_user(login.get(), password.get())
             user_interface = UserInterface(login.get(), password.get())
             Menu(window, user_interface)
         elif password.get() != password2.get():
             messagebox.showerror('Ошибка', 'Пароли не совпадают')
             SignUp(window)
-        elif UserInterface.is_login_exist(login.get()):
+        elif UserInterface.is_login_exist(login):
             messagebox.showerror('Ошибка', 'Пользователь с таким логином уже существует')
             SignUp(window)
 
@@ -169,8 +167,6 @@ def DesksList(window, user_interface, desks):
 
     # создаем стиль для кнопок
     button_style = {"bg": "#6DB0E3", "fg": "#043C66", "font": ("Arial Black", 12), "bd": 0, "activebackground": "#304D63"}
-
-    desks = [(0, 'Доска 1', 0, 'Myself'), (1, 'Доска для 2112', 1, 'хйу') , (2, 'Нееееет', 1, 'bob') , (3, 'ДОСКА', 0, 'хйу') , (4, 'Доска для 2112', 0, 'Adasd')]
 
     if len(desks) > 0:
         # создаем кнопки
@@ -690,10 +686,10 @@ def Card(window, user_interface, card, desk):
     text.place(relx=0.5, rely=0.5, anchor="center")
     author.place(relx=0.5, rely=0.95, anchor="center")
 
-# login=''
-# password=''
-# user_interface = UserInterface(login, password)
-# desk = (0, 'Доска 1', 0, 'Myself')
+login=''
+password=''
+user_interface = UserInterface(login, password)
+desk = (0, 'Доска 1', 0, 'Myself')
 window = Tk()
 window.geometry("450x550")
 window.title("TaskManager")
