@@ -342,58 +342,6 @@ def Desk(window, user_interface, desk):
         button_cancel.place(relx=0.3, rely=0.7, anchor="center")
         button_delete.place(relx=0.5, rely=0.8, anchor="center")
 
-    # функция добавления карточки
-    def add_card(desk_id, column_id):
-        editwindow = Tk()
-        editwindow.geometry("450x550")
-        editwindow.title("Добавление карточки")
-        editwindow.config(bg='#D7E3F5')
-        card_status = 1
-        # функция смены статуса
-        def change_status():
-            nonlocal card_status
-            if card_status < 3:
-                card_status += 1
-            else:
-                card_status = 1
-            button_cardstatus.config(text=f"Статус: {card_status}")
-
-        card_name = StringVar()
-
-        # функция подтверждения изменений
-        def confirm_changes(card_name, card_status):
-            if user_interface.add_card_to_column(card_name, card_status, desk_id, column_id):
-                messagebox.showinfo('Добавление карточки', 'Карточка была успешно добавлена')
-                editwindow.destroy()
-            else:
-                messagebox.showerror('Ошибка', 'Во время добавления карточки произошла ошибка')
-                editwindow.destroy()
-
-        # создаем стили
-        label_style = {"bg": '#D7E3F5', "fg": "#043C66", "font": ("Calibri", 14)}
-        entry_style = {"bg": "white", "fg": "#043C66", "font": ("Calibri", 14), "width": 20, "bd": 0}
-        button_style = {"fg": "#043C66", "font": ("Arial Black", 12), "bd": 0, "activebackground": "#304D63"}
-        button_style1 = {"bg": '#D7E3F5', "fg": "#000000", "font": ("Arial Black", 14), "bd": 0,"activebackground": "#304D63"}
-
-        # создаем текстовые поля и кнопки
-        label_title = Label(editwindow, text="Название:", **label_style)
-        entry_title = Entry(editwindow, textvariable=card_name, **entry_style)
-        button_confirm = Button(editwindow, text="Подтвердить",command=lambda: confirm_changes(card_name.get(), card_status), bg='#78e082',**button_style)
-        button_cancel = Button(editwindow, text="Отмена", bg='#e07878', command=lambda: editwindow.destroy(),**button_style)
-        button_cardstatus = Button(editwindow, text=f"Статус: {card_status}", command=change_status, **button_style1)
-
-        # задаем размеры кнопок
-        button_confirm.config(width=15, height=1)
-        button_cancel.config(width=10, height=1)
-        button_cardstatus.config(width=15, height=1)
-
-        # располагаем текст, поля для ввода и кнопки
-        label_title.place(relx=0.38, rely=0.45, anchor="e")
-        entry_title.place(relx=0.4, rely=0.45, anchor="w")
-        button_confirm.place(relx=0.7, rely=0.8, anchor="center")
-        button_cancel.place(relx=0.3, rely=0.8, anchor="center")
-        button_cardstatus.place(relx=0.5, rely=0.6, anchor="center")
-
     # удаляем элементы окна
     for widget in window.winfo_children():
         widget.destroy()
@@ -478,7 +426,7 @@ def Desk(window, user_interface, desk):
                 button.pack(padx=10, pady=5)
                 button_card.append(button)
 
-            button = Button(frame, text="+ Добавить карточку", command=lambda id=id:(add_card(desk[0],id[0]), Desk(window, user_interface, desk)), bg="#D7E3F5", fg="#2c2c2c", font=("Arial", 12), bd=0, activebackground="#304D63")
+            button = Button(frame, text="+ Добавить карточку", command=lambda id=id:AddCard(window, user_interface, desk, id[0]), bg="#D7E3F5", fg="#2c2c2c", font=("Arial", 12), bd=0, activebackground="#304D63")
             button.config(width=20, height=2)
             button.pack(padx=10, pady=5)
 
@@ -842,6 +790,57 @@ def AddColumn(window, user_interface, desk):
     button_back.place(relx=0.15, rely=0.05, anchor="center")
     label_newdeskname.place(relx=0.38, rely=0.5, anchor="e")
     entry_newdeskname.place(relx=0.4, rely=0.5, anchor="w")
+
+def AddCard(window, user_interface, desk, column_id):
+    # удаляем элементы окна
+    for widget in window.winfo_children():
+        widget.destroy()
+
+    card_status=1
+    # функция смены статуса
+    def change_status():
+        nonlocal card_status
+        if card_status < 3:
+            card_status += 1
+        else:
+            card_status = 1
+        button_cardstatus.config(text=f"Статус: {card_status}")
+
+    card_name = StringVar()
+
+    # функция подтверждения изменений
+    def confirm_changes(card_name, card_status):
+        if user_interface.add_card_to_column(card_name, card_status, desk[0], column_id):
+            messagebox.showinfo('Добавление карточки', f'Карточка {card_name} была успешно добавлена')
+            Desk(window, user_interface, desk)
+        else:
+            messagebox.showerror('Ошибка', 'Во время добавления карточки произошла ошибка')
+            Desk(window, user_interface, desk)
+
+    # создаем стили
+    label_style = {"bg": '#D7E3F5', "fg": "#043C66", "font": ("Calibri", 14)}
+    entry_style = {"bg": "white", "fg": "#043C66", "font": ("Calibri", 14), "width": 20, "bd": 0}
+    button_style = {"fg": "#043C66", "font": ("Arial Black", 12), "bd": 0, "activebackground": "#304D63"}
+    button_style1 = {"bg": '#D7E3F5', "fg": "#000000", "font": ("Arial Black", 14), "bd": 0,"activebackground": "#304D63"}
+
+    # создаем текстовые поля и кнопки
+    label_title = Label(window, text="Название:", **label_style)
+    entry_title = Entry(window, textvariable=card_name, **entry_style)
+    button_confirm = Button(window, text="Подтвердить", command=lambda: confirm_changes(card_name.get(), card_status), bg='#78e082', **button_style)
+    button_cancel = Button(window, text="Отмена", bg='#e07878', command=lambda: window.destroy(), **button_style)
+    button_cardstatus = Button(window, text=f"Статус: {card_status}", command=change_status, **button_style1)
+
+    # задаем размеры кнопок
+    button_confirm.config(width=15, height=1)
+    button_cancel.config(width=10, height=1)
+    button_cardstatus.config(width=15, height=1)
+
+    # располагаем текст, поля для ввода и кнопки
+    label_title.place(relx=0.38, rely=0.45, anchor="e")
+    entry_title.place(relx=0.4, rely=0.45, anchor="w")
+    button_confirm.place(relx=0.7, rely=0.8, anchor="center")
+    button_cancel.place(relx=0.3, rely=0.8, anchor="center")
+    button_cardstatus.place(relx=0.5, rely=0.6, anchor="center")
 
 window = Tk()
 window.geometry("450x550")
