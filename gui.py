@@ -394,45 +394,6 @@ def Desk(window, user_interface, desk):
         button_cancel.place(relx=0.3, rely=0.8, anchor="center")
         button_cardstatus.place(relx=0.5, rely=0.6, anchor="center")
 
-    # функция добавления столбца
-    def add_column(desk_id):
-        editwindow = Tk()
-        editwindow.geometry("450x550")
-        editwindow.title("Добавление столбца")
-        editwindow.config(bg='#D7E3F5')
-
-        column_name = StringVar()
-
-        # функция подтверждения изменений
-        def confirm_changes(column_name):
-            if user_interface.add_column_to_desk(desk_id, column_name):
-                messagebox.showinfo('Добавление столбца', 'Столбец был успешно добавлен')
-                editwindow.destroy()
-            else:
-                messagebox.showerror('Ошибка', 'Во время добавления столбца произошла ошибка')
-                editwindow.destroy()
-
-        # создаем стили
-        label_style = {"bg": '#D7E3F5', "fg": "#043C66", "font": ("Calibri", 14)}
-        entry_style = {"bg": "white", "fg": "#043C66", "font": ("Calibri", 14), "width": 20, "bd": 0}
-        button_style = {"fg": "#043C66", "font": ("Arial Black", 12), "bd": 0, "activebackground": "#304D63"}
-
-        # создаем текстовые поля и кнопки
-        label_title = Label(editwindow, text="Название:", **label_style)
-        entry_title = Entry(editwindow, textvariable=column_name, **entry_style)
-        button_confirm = Button(editwindow, text="Подтвердить", command=lambda: confirm_changes(column_name.get()), bg='#78e082', **button_style)
-        button_cancel = Button(editwindow, text="Отмена", bg='#e07878', command=lambda: editwindow.destroy(), **button_style)
-
-        # задаем размеры кнопок
-        button_confirm.config(width=15, height=1)
-        button_cancel.config(width=10, height=1)
-
-        # располагаем текст, поля для ввода и кнопки
-        label_title.place(relx=0.38, rely=0.45, anchor="e")
-        entry_title.place(relx=0.4, rely=0.45, anchor="w")
-        button_confirm.place(relx=0.7, rely=0.8, anchor="center")
-        button_cancel.place(relx=0.3, rely=0.8, anchor="center")
-
     # удаляем элементы окна
     for widget in window.winfo_children():
         widget.destroy()
@@ -540,7 +501,7 @@ def Desk(window, user_interface, desk):
 
         canvas.configure(yscrollcommand=scrollbar.set)
 
-        button = Button(frame, text="+ Добавить столбец",command=lambda: (add_column(desk[0]), Desk(window, user_interface, desk)), bg="#D7E3F5",fg="#2c2c2c", font=("Arial", 12), bd=0, activebackground="#304D63")
+        button = Button(frame, text="+ Добавить столбец",command=lambda: AddColumn(window, user_interface, desk), bg="#D7E3F5",fg="#2c2c2c", font=("Arial", 12), bd=0, activebackground="#304D63")
         button.config(width=18, height=2)
         button.pack(padx=10, pady=5)
 
@@ -835,6 +796,52 @@ def Card(window, user_interface, card, desk):
         label_cardstatus.place(relx=0.5, rely=0.75, anchor="center")
     text.place(relx=0.5, rely=0.5, anchor="center")
     author.place(relx=0.5, rely=0.95, anchor="center")
+
+def AddColumn(window, user_interface, desk):
+
+    column_name = StringVar()
+
+    def add_column(desk_id, column_name):
+        columnname = column_name.get()  # Получаем значение из поля ввода
+        if user_interface.add_column_to_desk(desk_id, columnname):
+            messagebox.showinfo('Добавление столбца', f'Столбец {columnname} был успешно добавлен')
+            Desk(window, user_interface, desk)
+        else:
+            messagebox.showerror('Ошибка', 'Во время добавления столбца произошла ошибка')
+            Desk(window, user_interface, desk)
+
+    # удаляем элементы окна
+    for widget in window.winfo_children():
+        widget.destroy()
+
+    # создаем стиль для текста
+    label_style = {"bg": "#D7E3F5", "fg": "#043C66", "font": ("Calibri", 14)}
+
+    # создаем стиль для полей ввода
+    entry_style = {"bg": "white", "fg": "#043C66", "font": ("Calibri", 14), "width": 20, "bd": 0}
+
+    # создаем стиль для кнопок
+    button_style = {"bg": "#6DB0E3", "fg": "#043C66", "font": ("Arial Black", 12), "bd": 0,"activebackground": "#304D63"}
+
+    # создаем кнопки
+    button_rename = Button(window, text="Создать", command=lambda: add_column(desk, column_name), **button_style)
+    button_back = Button(window, text="Назад", command=lambda: Desk(window, user_interface, desk), **button_style)
+
+    # создаем текстовые поля
+    label_newdeskname = Label(window, text="Имя столбца:", **label_style)
+
+    # создаем поля для ввода
+    entry_newdeskname = Entry(window, textvariable=column_name, **entry_style)
+
+    # задаем размеры кнопок
+    button_rename.config(width=15, height=1)
+    button_back.config(width=10, height=1)
+
+    # располагаем кнопки
+    button_rename.place(relx=0.5, rely=0.6, anchor="center")
+    button_back.place(relx=0.15, rely=0.05, anchor="center")
+    label_newdeskname.place(relx=0.38, rely=0.5, anchor="e")
+    entry_newdeskname.place(relx=0.4, rely=0.5, anchor="w")
 
 window = Tk()
 window.geometry("450x550")
