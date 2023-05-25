@@ -478,7 +478,7 @@ def Desk(window, user_interface, desk):
                 button.pack(padx=10, pady=5)
                 button_card.append(button)
 
-            button = Button(frame, text="+ Добавить карточку", command=lambda:(add_card(desk[0],card[0]), Desk(window, user_interface, desk)), bg="#D7E3F5", fg="#2c2c2c", font=("Arial", 12), bd=0, activebackground="#304D63")
+            button = Button(frame, text="+ Добавить карточку", command=lambda id=id:(add_card(desk[0],id[0]), Desk(window, user_interface, desk)), bg="#D7E3F5", fg="#2c2c2c", font=("Arial", 12), bd=0, activebackground="#304D63")
             button.config(width=20, height=2)
             button.pack(padx=10, pady=5)
 
@@ -597,7 +597,7 @@ def RenameDesk(window, user_interface, desk):
         if messagebox.askyesno(title="Подтвержение операции", message="Сменить имя?"):
             if user_interface.change_desk_name(desk[0], new_deskname):
                 messagebox.showinfo('Изменение названия доски', f'Название доски успешно изменено на {new_deskname}')
-                Desk(window, user_interface, desk)
+                Desk(window, user_interface, (desk[0], new_deskname, desk[2], desk[3]))
             else:
                 messagebox.showerror('Ошибка', 'Доска с таким именем уже существует')
                 Desk(window, user_interface, desk)
@@ -824,7 +824,7 @@ def AddColumn(window, user_interface, desk):
     button_style = {"bg": "#6DB0E3", "fg": "#043C66", "font": ("Arial Black", 12), "bd": 0,"activebackground": "#304D63"}
 
     # создаем кнопки
-    button_rename = Button(window, text="Создать", command=lambda: add_column(desk, column_name), **button_style)
+    button_rename = Button(window, text="Создать", command=lambda: add_column(desk[0], column_name), **button_style)
     button_back = Button(window, text="Назад", command=lambda: Desk(window, user_interface, desk), **button_style)
 
     # создаем текстовые поля
